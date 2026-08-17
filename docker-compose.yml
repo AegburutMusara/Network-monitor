@@ -1,0 +1,42 @@
+# Compose file สำหรับจัดการการรันหลาย container ในโปรเจคเดียวกัน
+# Container แรก: Flask app สำหรับตรวจ ping และแสดงหน้า dashboard
+# Container ที่สอง: Redis สำหรับเก็บสถิติ uptime และจำนวนการตรวจสอบ
+version: "3.8"
+
+services:
+  # Service monitor-app: แอปพลิเคชัน Flask ที่สร้างจาก Dockerfile
+  monitor-app:
+    # สร้าง image จาก Dockerfile ใน root ของโปรเจค
+    build:
+      context: .
+    container_name: network-monitor-app
+
+    # แมปพอร์ต 5000 ของ host ไปยัง 5000 ของ container
+    # เพื่อให้เปิดหน้าเว็บได้ที่ http://localhost:5000
+    ports:
+      - "5000:5000"
+
+    # ส่งค่าตัวแปรสภาพแวดล้อมให้ Flask app รู้ว่า Redis อยู่ที่ service ชื่อ redis-db
+    environment:
+      REDIS_HOST: redis-db
+      REDIS_PORT: 6379
+
+    # รอให้ Redis พร้อมก่อนแล้วค่อยเริ่มแอป
+    depends_on:
+      - redis-db
+
+    # หาก container หยุดหรือเครื่องรีสตาร์ท จะเริ่มใหม่อัตโนมัติ
+    restart: unless-stopped
+
+  # Service redis-db: ฐานข้อมูล Redis สำหรับเก็บข้อมูลสถิติ
+  redis-db:
+    # ใช้ official image ของ Redis เวอร์ชัน Alpine เพื่อให้มีขนาดเล็กและทำงานเร็ว
+    image: redis:alpine
+    container_name: redis-db
+
+    # เปิดพอร์ต 6379 ภายใน Docker network เพื่อให้ Flask app ติดต่อกับ Redis ได้
+    ports:
+      - "6379:6379"
+
+    # หาก Redis หยุด ให้ restart อัตโนมัติ
+    restart: unless-stopped

@@ -1,0 +1,5 @@
+# ไฟล์นี้เก็บ dependency ของแอปพลิเคชัน
+# Flask ใช้สำหรับสร้างหน้า dashboard
+# redis ใช้สำหรับเชื่อมต่อกับ Redis database
+Flask==3.0.2
+redis==5.0.3
